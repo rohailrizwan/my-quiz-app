@@ -1,6 +1,6 @@
 import React from 'react'
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { getDatabase, ref, set, onValue, get, DataSnapshot, push, child } from "firebase/database";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword ,signOut} from "firebase/auth";
+import { getDatabase, ref, set, onValue, get, DataSnapshot, push, child,query,equalTo, orderByChild } from "firebase/database";
 import { app } from "./firebaseconfig";
 import { resolve } from 'path';
 import { rejects } from 'assert';
@@ -41,7 +41,7 @@ export let FbLogin = (body: any) => {
 export let FbSignup = (body: any) => {
   return (
     new Promise((resolve, reject) => {
-      if (!body.username || !body.email || !body.password || !body.fullName ) {
+      if (!body.username || !body.email || !body.password || !body.fullName) {
         reject("fill form correctly")
       }
       else {
@@ -62,33 +62,34 @@ export let FbSignup = (body: any) => {
   )
 }
 
+export let Fbsignout=()=>{
+  signOut(auth).then(() => {
+    // Sign-out successful.
+  }).catch((error) => {
+    // An error happened.
+  });
+}
 
-const dbRef = ref(db);
 
-
-export const addQuiz = (quizData: any) => {
-  // Push a new quiz under a unique key
-  const newQuizRef = push(ref(db, 'quizzes'));
-  // const newQuizKey = newQuizRef.key; 
-  //   quizData.id=newQuizKey
-  // Set the quiz data under the generated key
-  set(newQuizRef, quizData)
-    .then((res) => {
-      console.log("quiz created")
+export let addquiz = (body: any) => {
+  return new Promise((resolve, rejects) => {
+    const refkey=push(ref(db,'quiz')).key
+    const reference = ref(db, 'quiz')
+    set(reference, body).then((res) => {
+        resolve('created')
+    }).catch((err:any)=>{
+      rejects(err)
     })
-    .catch((error) => {
-      console.error('Error adding quiz: ', error);
-    });
-};
-
+  })
+}
 
 export const getquiz = () => {
   return new Promise((resolve, rejects) => {
-    const reference = ref(db, `quizzes`)
+    const reference = ref(db, `quiz`)
     onValue(reference, (data) => {
-      // const allData = data.val()
       if (data) {
-        resolve(data.val())
+        resolve(Object.values(data.val()))
+        // console.log(Object.values(data.val()))
         return
       } else {
         rejects('error')
@@ -96,4 +97,19 @@ export const getquiz = () => {
       }
     })
   })
+}
+
+
+export const fbgetquiz=(index:any)=>{
+      return new Promise((resolve,rejects)=>{
+        const quizref=ref(db,`quiz/${index}`)
+        onValue(quizref,(data)=>{
+          if(data.exists()){
+            resolve(data.val())
+          }
+          else{
+            rejects("not exist")
+          }
+        })
+      })
 }
